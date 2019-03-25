@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/cheggaaa/pb"
@@ -67,7 +66,7 @@ func writeFile(
 
 // Save save url file
 func Save(
-	urlData URL, refer, fileName string, bar *pb.ProgressBar,
+	urlData URL, refer, fileName string, bar *pb.ProgressBar, chunkSizeMB int,
 ) error {
 	var err error
 	filePath, err := utils.FilePath(fileName, urlData.Ext, false)
@@ -111,9 +110,9 @@ func Save(
 	if fileError != nil {
 		return fileError
 	}
-	if strings.Contains(urlData.URL, "googlevideo") {
+	if chunkSizeMB > 0 {
 		var start, end, chunkSize int64
-		chunkSize = 10 * 1024 * 1024
+		chunkSize = int64(chunkSizeMB) * 1024 * 1024
 		remainingSize := urlData.Size
 		if tempFileSize > 0 {
 			start = tempFileSize
@@ -169,7 +168,7 @@ func Save(
 }
 
 // Download download urls
-func Download(v Data, refer string) error {
+func Download(v Data, refer string, chunkSizeMB int) error {
 	v.genSortedStreams()
 	if config.ExtractedData {
 		jsonData, _ := json.MarshalIndent(v, "", "    ")
@@ -211,6 +210,7 @@ func Download(v Data, refer string) error {
 			urls = append(urls, p.URL)
 		}
 		var inputs Aria2Input
+		inputs.Out = title + "." + data.URLs[0].Ext
 		inputs.Header = append(inputs.Header, "Referer: "+refer)
 		rpcData.Params[2] = &inputs
 		for i := range urls {
@@ -252,7 +252,7 @@ func Download(v Data, refer string) error {
 	bar.Start()
 	if len(data.URLs) == 1 {
 		// only one fragment
-		err := Save(data.URLs[0], refer, title, bar)
+		err := Save(data.URLs[0], refer, title, bar, chunkSizeMB)
 		if err != nil {
 			return err
 		}
@@ -274,7 +274,7 @@ func Download(v Data, refer string) error {
 		wgp.Add()
 		go func(url URL, refer, fileName string, bar *pb.ProgressBar) {
 			defer wgp.Done()
-			err := Save(url, refer, fileName, bar)
+			err := Save(url, refer, fileName, bar, chunkSizeMB)
 			if err != nil {
 				errs = append(errs, err)
 			}

@@ -49,6 +49,7 @@ func init() {
 	flag.StringVar(&config.OutputPath, "o", "", "Specify the output path")
 	flag.StringVar(&config.OutputName, "O", "", "Specify the output file name")
 	flag.BoolVar(&config.ExtractedData, "j", false, "Print extracted data")
+	flag.IntVar(&config.ChunkSizeMB, "cs", 0, "HTTP chunk size for downloading (in MB)")
 	flag.BoolVar(&config.UseAria2RPC, "aria2", false, "Use Aria2 RPC to download")
 	flag.StringVar(&config.Aria2Token, "aria2token", "", "Aria2 RPC Token")
 	flag.StringVar(&config.Aria2Addr, "aria2addr", "localhost:6800", "Aria2 Address")
@@ -64,16 +65,19 @@ func init() {
 		"Playlist video items to download. Separated by commas like: 1,5,6",
 	)
 	flag.BoolVar(&config.Caption, "C", false, "Download captions")
-	flag.StringVar(&config.YoukuCcode, "ccode", "0103010102", "Youku ccode")
+	flag.IntVar(
+		&config.RetryTimes, "retry", 10, "How many times to retry when the download failed",
+	)
+	// youku
+	flag.StringVar(&config.YoukuCcode, "ccode", "0590", "Youku ccode")
 	flag.StringVar(
 		&config.YoukuCkey,
 		"ckey",
 		"7B19C0AB12633B22E7FE81271162026020570708D6CC189E4924503C49D243A0DE6CD84A766832C2C99898FC5ED31F3709BB3CDD82C96492E721BDD381735026",
 		"Youku ckey",
 	)
-	flag.IntVar(
-		&config.RetryTimes, "retry", 10, "How many times to retry when the download failed",
-	)
+	flag.StringVar(&config.YoukuPassword, "password", "", "Youku password")
+	// youtube
 	flag.BoolVar(&config.YouTubeStream2, "ytb-stream2", false, "Use data in url_encoded_fmt_stream_map")
 }
 
@@ -160,7 +164,7 @@ func download(videoURL string) {
 			printError(item.URL, item.Err)
 			continue
 		}
-		err = downloader.Download(item, videoURL)
+		err = downloader.Download(item, videoURL, config.ChunkSizeMB)
 		if err != nil {
 			printError(item.URL, err)
 		}

@@ -25,6 +25,8 @@ var (
 	OutputName string
 	// ExtractedData print extracted data
 	ExtractedData bool
+	// ChunkSizeMB HTTP chunk size for downloading (in MB)
+	ChunkSizeMB int
 	// UseAria2RPC Use Aria2 RPC to download
 	UseAria2RPC bool
 	// Aria2Token Aria2 RPC Token
@@ -49,6 +51,8 @@ var (
 	YoukuCcode string
 	// YoukuCkey youku ckey
 	YoukuCkey string
+	// YoukuPassword youku password
+	YoukuPassword string
 	// RetryTimes how many times to retry when the download failed
 	RetryTimes int
 	// YouTubeStream2 will use data in `url_encoded_fmt_stream_map`
